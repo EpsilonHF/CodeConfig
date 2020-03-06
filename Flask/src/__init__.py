@@ -1,25 +1,28 @@
-import logging 
+import os
+from flask import Flask
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import logging
 from logging.config import dictConfig
 
 
-# logging config
 dictConfig(
     {
         "version": 1,
         "disable_existing_loggers": True,
         "loggers": {
-            "log_name.log": {
+            "log.log": {
                 "level": "INFO",
                 "handlers": ["info_handler", "error_handler"],
                 "propagate": 1,
-                "qualname": "log_name.log",
+                "qualname": "log.log",
             }
         },
         "handlers": {
             "info_handler": {
                 "level": "INFO",
                 "class": "logging.handlers.TimedRotatingFileHandler",
-                "filename": "./logs/info.log",
+                "filename": "./logs/log_info.log",
                 "when": "midnight",
                 "backupCount": 3,
                 "formatter": "default",
@@ -27,7 +30,7 @@ dictConfig(
             "error_handler": {
                 "level": "ERROR",
                 "class": "logging.handlers.TimedRotatingFileHandler",
-                "filename": "./logs/error.log",
+                "filename": "./logs/log_error.log",
                 "when": "midnight",
                 "backupCount": 3,
                 "formatter": "detail",
@@ -48,4 +51,24 @@ dictConfig(
     }
 )
 
-logger = logging.getLogger("log_name.log")
+
+def create_app():
+    # 初始化应用
+    app = Flask(__name__)
+    logger = logging.getLogger("radar.log")
+    limiter = Limiter(
+        app,
+        key_func=get_remote_address,
+        default_limits=["60000 per minute", "1000 per second"],
+    )
+
+    # 环境配置
+    app_settings = os.getenv("APP_SETTINGS")
+    app.config.from_object(app_settings)
+
+    # 注册blueprint
+    from src.api.api import model_blueprint
+
+    app.register_blueprint(model_blueprint)
+
+    return app
