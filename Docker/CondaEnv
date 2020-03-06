@@ -1,0 +1,20 @@
+# 在docker中配置cnoda虚拟环境
+FROM continuumio/miniconda:latest
+
+# 设置工作目录
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+# 添加依赖
+ADD ./env.yaml /usr/src/app/env.yaml
+
+# 创建虚拟环境
+RUN conda env create -f env.yaml
+RUN echo "source activate env_name" > ~/.bashrc
+ENV PATH /opt/conda/envs/env_name/bin:$PATH
+
+# 添加应用
+ADD . /usr/src/app
+
+# 运行服务
+CMD python manager.py runserver -h 0.0.0.0

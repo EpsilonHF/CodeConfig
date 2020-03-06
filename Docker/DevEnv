@@ -1,0 +1,42 @@
+# 在docker中配置Linux开发环境
+FROM debian
+RUN apt-get update
+
+# 基础设置
+RUN apt-get install -y locales \
+    && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
+    && dpkg-reconfigure --frontend=noninteractive locales \
+    && update-locale LANG=en_US.UTF-8
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
+
+# ssh 相关设置
+RUN mkdir -p /var/run/sshd \
+    && apt-get install -y openssh-server \
+    && RUN apt-get install -y sudo \
+    && RUN echo AddressFamily inet >> /etc/ssh/sshd_config
+
+# 配置工具
+RUN apt-get install -y build-essential \
+    man \
+    gdb \
+    git
+
+# 配置用户信息
+ARG username=name
+ARG userpasswd=passwd
+
+ # 添加用户信息
+RUN useradd -ms /bin/bash $username && (echo $username:$userpasswd | chpasswd)
+
+ # 配置用户 sudo 权限
+RUN adduser $username sudo
+
+ # 运行 ssh 服务
+CMD /usr/sbin/sshd -D
+
+# docker 启动命令
+# docker build -t dev-image .
+# docker create --name=dev -p 10022:22 --tmpfs /dev/shm:exec --privileged=true dev-image

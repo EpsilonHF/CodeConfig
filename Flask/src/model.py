@@ -26,6 +26,7 @@ class Model:
 
         if not self._check_data():
             return jsonify({"code": "201", "msg": "wrong data"})
+        logger.info("check data finished")
 
         try:
             pass
@@ -33,4 +34,5 @@ class Model:
             logger.error(e)
             return jsonify({"code": 202, "msg": "process error"})
 
+        logger.info("process fininshed")
         return jsonify({"code": 200})
